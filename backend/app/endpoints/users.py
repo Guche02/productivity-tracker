@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from schemas.user import UserBase, UserOut, UserLogin, Token
-from db.mongo import db
-from core.auth import create_access_token
+from app.schemas.user import UserBase, UserOut, UserLogin, Token
+from app.db.mongo import db
+from app.core.auth import create_access_token
 from datetime import datetime
 from bson import ObjectId
 from passlib.context import CryptContext

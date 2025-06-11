@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from endpoints.users import router as users_router
-from endpoints.productivity import router as productivity_router
-from services.whatsapp_agent import start_scheduler
+from app.endpoints.users import router as users_router
+from app.endpoints.productivity import router as productivity_router
+from app.services.whatsapp_agent import start_scheduler
 import uvicorn
 
 app = FastAPI()

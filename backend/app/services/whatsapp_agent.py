@@ -48,6 +48,6 @@ def start_scheduler():
     if scheduler is None:  
         scheduler = BackgroundScheduler(timezone="Asia/Kathmandu")
         scheduler.add_job(morning_job, 'cron', hour=7, minute=0)
-        scheduler.add_job(night_job, 'cron', hour=21, minute=36)
+        scheduler.add_job(night_job, 'cron', hour=21, minute=30)
         scheduler.start()
         print("Scheduler started.")

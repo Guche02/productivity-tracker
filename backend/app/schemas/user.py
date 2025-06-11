@@ -1,20 +1,23 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from typing import List
 
 class ProductivityScore(BaseModel):
-    exercise: int = 0
-    study: int = 0
-    meditation: int = 0
-    hobby: int = 0
-    rest_time: int = 0
-
+    exercise: float = Field(0, ge=0, le=5)
+    study: float = Field(0, ge=0, le=5)
+    meditation: float = Field(0, ge=0, le=5)
+    hobby: float = Field(0, ge=0, le=5)
+    rest_time: float = Field(0, ge=0, le=5)
 
 class ProductivityResponse(BaseModel):
     message: str
-    overall_score: float
-    details: ProductivityScore
+    exercise: Optional[float] = None
+    study: Optional[float] = None
+    meditation: Optional[float] = None
+    hobby: Optional[float] = None
+    rest_time: Optional[float] = None
+    overall: Optional[float] = None
 
 class UserBase(BaseModel):
     email: EmailStr
