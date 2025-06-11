@@ -34,8 +34,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(a
 async def update_productivity(
     user_input: str,
     current_user: dict = Depends(get_current_user)
-):
-    productivity = chatbot(user_input)
+): 
+    thread_id = str(current_user["_id"])  
+    productivity = chatbot(user_input, thread_id=thread_id)
 
     if productivity["scores"]:
         scores = productivity["scores"]
@@ -58,7 +59,7 @@ async def update_productivity(
         )
 
         return {
-            "message": "Productivity scores updated successfully",
+            "message": productivity["result"],
             **scores,
             "overall": overall
         }

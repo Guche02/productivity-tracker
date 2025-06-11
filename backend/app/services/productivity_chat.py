@@ -104,7 +104,7 @@ conn = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
 memory = SqliteSaver(conn)
 graph = workflow.compile(checkpointer=memory)
 
-def productivity_assistant(user_input: str, thread_id: str = "abc123", messages_state: List = None) -> tuple[str, List]:
+def productivity_assistant(user_input: str, thread_id: str, messages_state: List = None) -> tuple[str, List]:
     config = {"configurable": {"thread_id": thread_id}}
 
     if messages_state is None:
@@ -114,7 +114,6 @@ def productivity_assistant(user_input: str, thread_id: str = "abc123", messages_
 
     state = {"messages": messages_state}
     result = graph.invoke(state, config=config)
-
     messages_state.extend(result["messages"])
 
     return {"result": result["messages"][-1].content, "messages": messages_state}

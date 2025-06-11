@@ -11,9 +11,12 @@ class GraphState(TypedDict):
     result: str
     scores: dict
 
-def productivity_node(state: GraphState) -> GraphState:
+def productivity_node(state: GraphState, config: dict) -> GraphState:
     user_input = state["messages"][-1].content
-    response = productivity_assistant(user_input=user_input,messages_state= state["messages"])
+    thread_id = config["configurable"]["thread_id"]
+    print("---------Thread_id from config: ", thread_id)
+    print("----------Thread id from state: ", state)
+    response = productivity_assistant(user_input=user_input, thread_id= thread_id, messages_state= state["messages"])
     print("----------------------------------------------------------Response from the productivity node: ", response)
     return {
         "messages": response["messages"],
@@ -32,10 +35,10 @@ def check_success_in_result(state: GraphState) -> str:
 def update_scores_node(state: GraphState) -> GraphState:
     scores = update_productivity_scores(state["result"])
     print("-------------------------------------Updated scores", scores)
-    final_msg = "✅ Daily scores updated. Thanks for your time."
+    final_msg = "Daily scores updated. Thanks for your time."
     return {
         "messages": state["messages"] + [AIMessage(content=final_msg)],
-        "result": state["result"],
+        "result": final_msg,
         "scores": scores
     }
 
@@ -58,7 +61,7 @@ workflow.add_conditional_edges(
 graph = workflow.compile()
 message_history: List = []
 
-def chatbot(user_input: str, history: Optional[List] = None) -> dict:
+def chatbot(user_input: str, thread_id = str,  history: Optional[List] = None) -> dict:
     """
     Wraps the LangGraph execution. Takes a user string input,
     updates message state, runs the graph, and returns the full state.
@@ -70,6 +73,8 @@ def chatbot(user_input: str, history: Optional[List] = None) -> dict:
     Returns:
         dict: Final GraphState with 'messages', 'result', and 'scores'.
     """
+    config = {"configurable": {"thread_id": thread_id}}
+
     state_messages = history or []
     state_messages.append(HumanMessage(content=user_input))
 
@@ -79,7 +84,7 @@ def chatbot(user_input: str, history: Optional[List] = None) -> dict:
         "scores": {}
     }
     print("-------------------------------state passed from chatbot: ", state)
-    final_state = graph.invoke(state)
+    final_state = graph.invoke(state, config=config)
     return final_state
 
 # chatbot("Hi")
