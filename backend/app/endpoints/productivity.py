@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from schemas.user import ProductivityScore, ProductivityResponse
-from db.mongo import db  
-from core.auth import decode_token
+from app.schemas.user import ProductivityScore, ProductivityResponse
+from app.db.mongo import db  
+from app.core.auth import decode_token
+from app.services.chatbot import chatbot
 from bson import ObjectId
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -9,6 +10,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 auth_scheme = HTTPBearer()
 
 users_collection = db["users"]
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
     token = credentials.credentials  
     try:
@@ -30,28 +32,38 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(a
 
 @router.post("/productivity", response_model=ProductivityResponse, status_code=200)
 async def update_productivity(
-    productivity: ProductivityScore,
-    current_user: dict = Depends(get_current_user)         # depends is used to get the current user from the token, and if not found the route doesn't proceed.
-):
-    for field, value in productivity.dict().items():
-        if value < 0 or value > 5:
-            raise HTTPException(
-                status_code=400,
-                detail=f"{field} score must be between 0 and 5"
-            )
+    user_input: str,
+    current_user: dict = Depends(get_current_user)
+): 
+    thread_id = str(current_user["_id"])  
+    productivity = chatbot(user_input, thread_id=thread_id)
 
-    overall = round(sum(productivity.dict().values()) / 5, 2)
+    if productivity["scores"]:
+        scores = productivity["scores"]
 
-    await users_collection.update_one(
-        {"_id": current_user["_id"]},
-        {"$set": {
-            "productivity": productivity.dict(),
-            "overall_productivity": overall
-        }}
-    )
+        for field, value in scores.items():
+            if value < 0 or value > 5:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{field} score must be between 0 and 5"
+                )
+
+        overall = round(sum(scores.values()) / len(scores), 2)
+
+        await users_collection.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {
+                "productivity": scores,
+                "overall_productivity": overall
+            }}
+        )
+
+        return {
+            "message": productivity["result"],
+            **scores,
+            "overall": overall
+        }
 
     return {
-        "message": "Productivity updated successfully",
-        "overall_score": overall,
-        "details": productivity.dict()
+        "message": productivity["result"]
     }
