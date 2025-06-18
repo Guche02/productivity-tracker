@@ -1,17 +1,19 @@
 import streamlit as st
 import requests
+import pandas as pd
+import altair as alt
 
-API_BASE_URL = "http://localhost:8000/users"  # Adjust as needed
+API_BASE_URL = "http://localhost:8000/users" 
 
 st.set_page_config(page_title="Productivity Tracker", layout="centered")
 
-# Session state initialization
 if "access_token" not in st.session_state:
     st.session_state.access_token = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "view_chart" not in st.session_state:
+    st.session_state.view_chart = False
 
-# ------------------- Login/Register Forms ------------------- #
 def show_login():
     st.title("🔐 Login to Productivity Tracker")
     with st.form("login_form"):
@@ -53,14 +55,55 @@ def show_chat_interface():
     st.title("🤖 Productivity Chatbot")
     st.markdown("Ask about your productivity or summarize your day.")
 
-    # Sidebar logout button
     with st.sidebar:
         st.markdown("## Account")
+
+        if st.button("📈 View Last 7 Days Productivity"):
+            st.session_state.view_chart = True  
+
         if st.button("🔓 Logout"):
             st.session_state.access_token = None
             st.session_state.messages = []
+            st.session_state.view_chart = False  
             st.success("Logged out successfully.")
             st.rerun()
+
+    if st.session_state.view_chart:
+        headers = {"Authorization": f"Bearer {st.session_state.access_token}"}
+        try:
+            res = requests.get(f"{API_BASE_URL}/productivity-history", headers=headers)
+            if res.status_code == 200:
+                data = res.json()
+                if data:
+                    df = pd.DataFrame(data)
+                    df["date"] = pd.to_datetime(df["date"])
+                    metrics = ["overall", "exercise", "study", "meditation", "hobby", "rest_time"]
+
+                    st.markdown("### 📊 Select Productivity Metric")
+                    metric = st.selectbox("Choose a category to view:", metrics)
+
+                    df[metric] = pd.to_numeric(df[metric].astype(str).str.strip(), errors="coerce")
+                    filtered_df = df.dropna(subset=[metric])
+
+                    if filtered_df.empty:
+                        st.warning(f"No valid data for **{metric}** in the past 7 days.")
+                    else:
+                        chart = alt.Chart(filtered_df).mark_bar().encode(
+                            x=alt.X("date:T", title="Date"),
+                            y=alt.Y(f"{metric}:Q", title="Score"),
+                            tooltip=["date:T", f"{metric}:Q"]
+                        ).properties(
+                            title=f"📊 {metric.replace('_', ' ').title()} Scores (Last 7 Days)",
+                            width=600,
+                            height=400
+                        )
+                        st.altair_chart(chart, use_container_width=True)
+                else:
+                    st.info("No productivity data available.")
+            else:
+                st.error("Failed to fetch productivity history.")
+        except Exception as e:
+            st.error(f"API error: {e}")
 
     if not st.session_state.messages:
         welcome_message = (
@@ -74,11 +117,8 @@ def show_chat_interface():
             st.markdown(msg)
 
     user_input = st.chat_input("What's your productivity update today?")
-
     if user_input:
-        headers = {
-            "Authorization": f"Bearer {st.session_state.access_token}"
-        }
+        headers = {"Authorization": f"Bearer {st.session_state.access_token}"}
         try:
             res = requests.post(
                 f"{API_BASE_URL}/productivity",
@@ -89,7 +129,6 @@ def show_chat_interface():
                 result = res.json()
                 message = result["message"]
 
-                # Append and show new messages
                 st.session_state.messages.append(("You", user_input))
                 st.session_state.messages.append(("Bot", message))
 
@@ -99,17 +138,15 @@ def show_chat_interface():
                     st.markdown(message)
 
                     if "scores" in result:
-                      st.markdown("### 📊 Your Productivity Scores")
-                      for key, value in result["scores"].items():
-                        st.markdown(f"**{key.replace('_', ' ').title()}**")
-                        st.progress(value / 5)
-
+                        st.markdown("### 📊 Your Productivity Scores")
+                        for key, value in result["scores"].items():
+                            st.markdown(f"**{key.replace('_', ' ').title()}**")
+                            st.progress(value / 5)
             else:
                 st.error(res.json().get("detail", "Something went wrong"))
         except Exception as e:
             st.error(f"API error: {e}")
 
-# ------------------- Main Page Layout ------------------- #
 if st.session_state.access_token:
     show_chat_interface()
 else:
