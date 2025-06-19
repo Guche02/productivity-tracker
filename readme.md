@@ -34,4 +34,4 @@ A full-stack application that tracks user productivity based on conversational i
 
 ## Deployment
 
-View the deployed app at: https://p-ductivity-tracker.streamlit.app/
+View the deployed app at: https://p-ductivity-tracker.streamlit.app/ (In progress)
