@@ -31,3 +31,7 @@ A full-stack application that tracks user productivity based on conversational i
 
 - **🧾 Data Storage**  
   User productivity data is stored persistently in **MongoDB**.
+
+## Deployment
+
+View the deployed app at: https://p-ductivity-tracker.streamlit.app/
