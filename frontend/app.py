@@ -52,7 +52,7 @@ def show_register():
                 st.error(response.json().get("detail", "Error creating account"))
 
 def show_chat_interface():
-    st.title("🤖 Productivity Chatbot")
+    st.title("🧕 Productivity MOTHER")
     st.markdown("Ask about your productivity or summarize your day.")
 
     with st.sidebar:
@@ -106,10 +106,11 @@ def show_chat_interface():
             st.error(f"API error: {e}")
 
     if not st.session_state.messages:
-        welcome_message = (
-            "Hi there, I am your productivity assistant! 😊\n\n"
-            "Tell me about your day, or would you like to view your previous scores?"
-        )
+        welcome_message = """
+           Hello babu nani! 👀✨What did you do today? Don’t tell me you just scrolled your phone all day! 😒\n\n
+Tell me everything — padhaai, exercise, even your *so-called* ‘rest time’. Or do you want me to pull up your old scores and do the math myself, hmmm?
+"""
+
         st.session_state.messages.append(("Bot", welcome_message))
 
     for sender, msg in st.session_state.messages:

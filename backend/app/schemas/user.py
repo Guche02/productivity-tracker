@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
-from datetime import datetime
-from typing import List
+from typing import Optional, List
+from datetime import datetime, date
 
 class ProductivityScore(BaseModel):
     exercise: float = Field(0, ge=0, le=5)
@@ -9,6 +8,12 @@ class ProductivityScore(BaseModel):
     meditation: float = Field(0, ge=0, le=5)
     hobby: float = Field(0, ge=0, le=5)
     rest_time: float = Field(0, ge=0, le=5)
+
+class DatedProductivityScore(ProductivityScore):
+    date: date
+
+    class Config:
+        orm_mode = True
 
 class ProductivityResponse(BaseModel):
     message: str
@@ -23,12 +28,12 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     password: str
-    productivity: Optional[ProductivityScore] = None
 
-class UserOut(BaseModel):    # UserOut is used 
+class UserOut(BaseModel):  
     id: str
     email: EmailStr
     created_at: datetime
+    productivity: List[DatedProductivityScore] = []  
 
     class Config:
         orm_mode = True
